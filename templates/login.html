@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Task Manager – Login</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="static/css/login.css"> 
+</head>
+<body>
+  <!-- error message  -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul class="flashes">
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<div class="top-right-home">
+  <a href="/">Home</a>
+</div>
+
+  <div class="outer-container">
+    <div class="left-section">
+      <img src="static/images/login img.jpg" alt="Illustration" />
+    </div>
+   
+    <div class="right-section">
+      <div class="container">
+        <h1><i   style="color: purple;" class="fas fa-clipboard-list"></i> Task Manager</h1>
+
+        <form method="POST" action="/login">
+          <div>
+            <label for="email">Email<span>*</span></label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+          </div>
+          <div>
+            <label for="password">Password<span>*</span></label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          </div>
+          <button type="submit" class="continue-btn">Login</button>
+        </form>
+
+        <div class="center">or</div>
+
+        <a href="/login/google" class="google-btn">
+          <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
+          Continue with Google
+        </a>
+
+        <div class="center" style="margin-top: 20px;">
+          If you don’t have an account? <a href="/signup">Sign up here</a>
+        </div>
+        <div class="line"></div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Task Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Main Header Section -->
+        <header class="dashboard-header">
+            <h2>Hi, {{ current_user.name }}!</h2>
+            <a href="{{ url_for('logout') }}" class="logout-link">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="dashboard-nav">
+            <button class="tab-btn active" data-tab="tasks" onclick="showTab('tasks')">
+                📋 Tasks
+            </button>
+            <button class="tab-btn" data-tab="analytics" onclick="showTab('analytics')">
+                📊 Analytics
+            </button>
+            <button class="tab-btn" data-tab="reports" onclick="showTab('reports')">
+                📄 Reports
+            </button>
+        </nav>
+        
+        <hr>
+
+        <!-- Main Tasks Section -->
+        <section id="tasks-tab" class="tab-content active">
+            <div class="task-toolbar">
+                <button class="btn-add" onclick="openTaskModal()">
+                    <i class="fas fa-plus"></i> Add New Task
+                </button>
+                
+                <input type="text" 
+                       id="task-search" 
+                       class="task-search" 
+                       placeholder="Search your tasks..." 
+                       onkeyup="filterTasks()">
+                
+                <select id="filter-dropdown" class="filter-dropdown" onchange="applySort()">
+                    <option value="">-- Sort by --</option>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                </select>
+            </div>
+
+            <!-- Task List -->
+            <div class="task-list" id="task-list">
+                {% if tasks %}
+                    {% for task in tasks %}
+                    <div class="task-card" data-priority="{{ task.priority|lower }}" data-task-id="{{ task.id }}">
+                        <div class="task-content">
+                            <div class="task-header">
+                                <u><h4 class="task-title">{{ task.title }}</h4></u>
+                                <span class="priority-badge priority-{{ task.priority|lower }}">
+                                    <p>Priority: {{ task.priority }}</p>
+                                </span>
+                            </div>
+                            
+                            <p class="task-desc">{{ task.description or "No description provided" }}</p>
+                            
+                            <!-- Timer Section -->
+                            <div class="time-tracking">
+                                <div class="timer-display">
+                                    <i class="fas fa-clock"></i>
+                                    <span id="timer-{{ task.id }}" class="timer-text">00:00:00</span>
+                                </div>
+                                <div class="timer-controls">
+                                    <button onclick="startTimer('{{ task.id }}')" class="btn-start">
+                                        <i class="fas fa-play"></i> Start
+                                    </button>
+                                    <button onclick="pauseTimer('{{ task.id }}')" class="btn-pause">
+                                        <i class="fas fa-pause"></i> Pause
+                                    </button>
+                                    <button onclick="logTime('{{ task.id }}')" class="btn-log">
+                                        <i class="fas fa-save"></i> Log
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Task Details -->
+                        <div class="task-meta">
+                            <div class="task-info">
+                                <p><strong>Due:</strong> 
+                                    {% if task.due_date %}
+                                        {{ task.due_date }}
+                                    {% else %}
+                                        <em>No due date</em>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Estimated:</strong> {{ task.time_spent }} hrs</p>
+                                <p><strong>Actual:</strong> 
+                                    {% if task.actual_time_spent %}
+                                        {{ task.actual_time_spent }} hrs
+                                    {% else %}
+                                        <em>Not logged yet</em>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Status:</strong> 
+                                    {% if task.completed %}
+                                        <span class="status-complete">Completed</span>
+                                    {% else %}
+                                        <span class="status-pending">In Progress</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="task-actions">
+                                <button onclick="editTask('{{ task.id }}')" class="btn-edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <form method="POST" 
+                                      action="{{ url_for('delete_task', task_id=task.id) }}" 
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Are you sure? This cannot be undone!');">
+                                    <button type="submit" class="btn-delete">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-tasks fa-3x"></i>
+                        <h3>No tasks yet!</h3>
+                        <p>Click "Add New Task" to get started.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Analytics Dashboard -->
+        <section id="analytics-tab" class="tab-content">
+            <div class="analytics-container">
+                <h3>Your Task Analytics</h3>
+                
+                <div class="chart-row">
+                    <div class="chart-container">
+                        <h4>Tasks Created by Day</h4>
+                        <canvas id="taskCreationChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h4>Tasks by Priority</h4>
+                        <canvas id="priorityChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-row">
+                    <div class="chart-container">
+                        <h4>Task Completion Rate</h4>
+                        <canvas id="completionChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h4>Time Spent vs Estimated</h4>
+                        <canvas id="timeChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Statistics Overview -->
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <h4>Total Tasks</h4>
+                        <span class="stat-number">{{ tasks|length }}</span>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Completed</h4>
+                        <span class="stat-number">{{ tasks|selectattr('completed')|list|length }}</span>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Pending</h4>
+                        <span class="stat-number">{{ tasks|rejectattr('completed')|list|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reports-tab" class="tab-content">
+            <div class="reports-container">
+                <h3>Task Reports</h3>
+                
+                <div class="report-summary">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Due Date</th>
+                                <th>Time Spent</th>
+                                <th>Actual Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr class="{% if task.completed %}completed-row{% endif %}">
+                                <td>{{ task.title }}</td>
+                                <td>
+                                    {% if task.completed %}
+                                        <span class="badge badge-success">Done</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ task.priority|lower }}">{{ task.priority }}</span>
+                                </td>
+                                <td>{{ task.due_date or "N/A" }}</td>
+                                <td>{{ task.time_spent }} hrs</td>
+                                <td>{{ task.actual_time_spent or "Not logged" }} hrs</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Export Options -->
+                <div class="export-section">
+                    <h4>Export Your Data</h4>
+                    <div class="export-buttons">
+                        <button style="background-color: #b24ee0; border-radius: 6px;">
+                            <a style="color: white;" href="{{ url_for('download_csv') }}" class="btn btn-success">
+                                <i class="fas fa-file-csv"></i> Download CSV
+                            </a>
+                        </button>
+                        <button style="background-color: #b24ee0; border-radius: 6px;">
+                            <a style="color: white;" href="{{ url_for('download_pdf') }}" class="btn btn-danger">
+                                <i class="fas fa-file-pdf"></i> Download PDF
+                            </a>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Task Creation Modal -->
+        <div id="taskModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add New Task</h3>
+                    <button class="close-btn" onclick="closeTaskModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form method="POST" action="/add-task" id="taskForm">
+                    <div class="form-group">
+                        <label for="title">Task Title *</label>
+                        <input type="text" 
+                               name="title" 
+                               id="title"
+                               placeholder="What needs to be done?" 
+                               required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea name="description" 
+                                  id="description"
+                                  placeholder="Add more details about this task..."
+                                  rows="3"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="priority">Priority Level</label>
+                            <select name="priority" id="priority">
+                                <option value="High">High</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="due_date">Due Date *</label>
+                            <input type="date" 
+                                   name="due_date" 
+                                   id="due_date"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="time_spent">Time Estimate (hours) *</label>
+                            <input type="number" 
+                                   name="time_spent" 
+                                   id="time_spent"
+                                   step="0.5" 
+                                   min="0.5"
+                                   placeholder="2.5"
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="completed">Status</label>
+                            <select name="completed" id="completed">
+                                <option value="False" selected>Pending</option>
+                                <option value="True">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Task
+                        </button>
+                        <button type="button" onclick="closeTaskModal()" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Main Dashboard Script -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+    <!-- Chart Data Scripts -->
+    <script id="dailyLabels" type="application/json">{{ daily_labels | tojson }}</script>
+    <script id="dailyData" type="application/json">{{ daily_data | tojson }}</script>
+    <script id="monthlyLabels" type="application/json">{{ monthly_labels | tojson }}</script>
+    <script id="monthlyData" type="application/json">{{ monthly_data | tojson }}</script>
+    <script id="priorityData" type="application/json">{{ priority_data | tojson }}</script>
+    <script id="completionData" type="application/json">{{ completion_data | tojson }}</script>
+    <script id="timeLabels" type="application/json">{{ time_labels | tojson }}</script>
+    <script id="estimatedTimes" type="application/json">{{ estimated_times | tojson }}</script>
+    <script id="actualTimes" type="application/json">{{ actual_times | tojson }}</script>
+
+</body>
+</html>

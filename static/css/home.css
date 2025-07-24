@@ -1,0 +1,123 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f0f2f5;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+header {
+  background-color: purple;
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #0056b3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffffff;
+  text-decoration: none;
+  gap: 10px;
+}
+
+.logo i {
+  font-size: 24px;
+}
+
+nav {
+  display: flex;
+  gap: 25px;
+}
+
+nav a {
+    text-decoration: none;
+      color: white;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 6px;
+      transition: background 0.3s, color 0.3s;
+}
+
+nav a:hover {
+   background-color: #e1bdee;
+      color: #6a1b9a;
+    }
+
+.hero {
+  padding: 80px 40px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 36px;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+.hero p {
+  font-size: 18px;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto 40px;
+}
+
+.hero .buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.hero .buttons a {
+  padding: 12px 24px;
+  font-size: 16px;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: 0.3s;
+  font-weight: 500;
+}
+
+.login-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.login-btn:hover {
+  background-color: #0056b3;
+}
+
+.signup-btn {
+  border: 2px solid #007bff;
+  color: #007bff;
+  background-color: transparent;
+}
+
+.signup-btn:hover {
+  background-color: #e7f0ff;
+}
+
+@media (max-width: 600px) {
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  nav {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
+  }
+}
+.footer{
+  background-color: purple;
+}
+.a{
+   background-repeat: no-repeat;
+   background-size: cover;
+   backdrop-filter: blur(30%);
+}
